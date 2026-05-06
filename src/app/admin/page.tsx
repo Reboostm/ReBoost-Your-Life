@@ -182,9 +182,13 @@ function AddUserForm({
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "";
       if (msg.includes("email-already-in-use")) {
-        setError("That email already has an account.");
+        setError("That email already has an account. Delete it from Firebase Console first.");
+      } else if (msg.includes("invalid-email")) {
+        setError("Invalid email format.");
+      } else if (msg.includes("weak-password")) {
+        setError("Password creation failed. Try again.");
       } else {
-        setError("Failed to create user. Try again.");
+        setError(`Error: ${msg || "Failed to create user. Try again."}`);
       }
     } finally {
       setSubmitting(false);
@@ -192,9 +196,9 @@ function AddUserForm({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 flex items-end justify-center px-4 pb-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-end justify-center px-4 pb-28" onClick={onClose}>
       <div
-        className="bg-surface border border-border rounded-3xl p-5 w-full max-w-sm animate-slide-up"
+        className="bg-surface border border-border rounded-3xl p-5 w-full max-w-sm animate-slide-up mb-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
@@ -204,7 +208,7 @@ function AddUserForm({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
           <div>
             <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">Name</label>
             <input
