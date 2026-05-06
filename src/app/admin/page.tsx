@@ -43,12 +43,15 @@ function AdminPanel() {
     if (!firebaseUser?.uid) return;
     setCreatingFamily(true);
     try {
+      console.log("Creating family for user:", firebaseUser.uid);
       await createFamily("Family", firebaseUser.uid);
-      const updated = await getUserProfile(firebaseUser.uid);
-      // Force a refresh by reloading
+      console.log("Family created, reloading...");
+      // Wait a moment for Firestore to fully write, then reload
+      await new Promise(resolve => setTimeout(resolve, 1000));
       window.location.reload();
     } catch (err) {
       console.error("Failed to create family:", err);
+      alert(`Failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setCreatingFamily(false);
     }
