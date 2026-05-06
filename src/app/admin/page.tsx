@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { getSecondaryAuth, ADMIN_EMAIL } from "@/lib/firebase";
-import { createUserProfile, addUserToFamily, getFamilyMembers, getUserProfile } from "@/lib/firestore";
+import { createUserProfile, addUserToFamily, getFamilyMembers, getUserProfile, createFamily } from "@/lib/firestore";
 import { UserProfile, AVATAR_COLORS } from "@/types";
 import AuthGuard from "@/components/AuthGuard";
 import Navigation from "@/components/Navigation";
@@ -36,6 +36,22 @@ function AdminPanel() {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [successMsg, setSuccessMsg] = useState("");
+  const [creatingFamily, setCreatingFamily] = useState(false);
+
+  const handleCreateFamily = async () => {
+    if (!firebaseUser?.uid) return;
+    setCreatingFamily(true);
+    try {
+      await createFamily("Family", firebaseUser.uid);
+      const updated = await getUserProfile(firebaseUser.uid);
+      // Force a refresh by reloading
+      window.location.reload();
+    } catch (err) {
+      console.error("Failed to create family:", err);
+    } finally {
+      setCreatingFamily(false);
+    }
+  };
 
   const loadMembers = useCallback(async () => {
     if (!userProfile?.familyId) return;
@@ -79,7 +95,19 @@ function AdminPanel() {
           </div>
         )}
 
-        <div className="bg-surface border border-border rounded-2xl overflow-hidden">
+        {!userProfile?.familyId ? (
+          <div className="bg-surface border border-border rounded-2xl p-6 text-center space-y-4">
+            <p className="text-text-secondary">No family created yet.</p>
+            <button
+              onClick={handleCreateFamily}
+              disabled={creatingFamily}
+              className="w-full py-3 bg-primary text-bg font-bold rounded-xl hover:bg-primary-dark disabled:opacity-50 active:scale-95 transition-transform"
+            >
+              {creatingFamily ? "Creating..." : "Create Family"}
+            </button>
+          </div>
+        ) : (
+          <div className="bg-surface border border-border rounded-2xl overflow-hidden">
           <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
             <Users className="w-4 h-4 text-muted" />
             <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
@@ -99,6 +127,7 @@ function AdminPanel() {
             </div>
           )}
         </div>
+        )}
 
         <div className="bg-surface-2 border border-border rounded-2xl p-4">
           <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Default Login Info</p>
