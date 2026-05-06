@@ -3,18 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { AVATAR_COLORS } from "@/types";
-import { Zap, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Zap } from "lucide-react";
 
 export default function AuthPage() {
-  const { firebaseUser, userProfile, loading, signup, login } = useAuth();
+  const { firebaseUser, userProfile, loading, login } = useAuth();
   const router = useRouter();
 
-  const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0]);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -29,29 +25,14 @@ export default function AuthPage() {
     }
   }, [loading, firebaseUser, userProfile, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSubmitting(true);
     try {
-      if (mode === "signup") {
-        if (!displayName.trim()) throw new Error("Name is required");
-        await signup(email, password, displayName.trim(), avatarColor);
-        router.push("/family");
-      } else {
-        await login(email, password);
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
-      setError(
-        msg.includes("email-already-in-use")
-          ? "Email already in use"
-          : msg.includes("user-not-found") || msg.includes("wrong-password") || msg.includes("invalid-credential")
-          ? "Invalid email or password"
-          : msg.includes("weak-password")
-          ? "Password must be at least 6 characters"
-          : msg
-      );
+      await login(email, password);
+    } catch {
+      setError("Wrong email or password. Ask your admin to check your account.");
     } finally {
       setSubmitting(false);
     }
@@ -60,56 +41,28 @@ export default function AuthPage() {
   if (loading) return <LoadingScreen />;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-bg">
+    <div className="min-h-screen flex flex-col items-center justify-center px-5 bg-bg">
       {/* Logo */}
-      <div className="mb-8 text-center">
-        <div className="inline-flex items-center gap-2 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center glow-green">
-            <Zap className="w-6 h-6 text-bg" fill="currentColor" />
+      <div className="mb-10 text-center">
+        <div className="inline-flex items-center gap-2.5 mb-3">
+          <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center glow-green">
+            <Zap className="w-7 h-7 text-bg" fill="currentColor" />
           </div>
-          <h1 className="text-2xl font-black text-text-primary">
-            Re<span className="text-primary">Boost</span>
-          </h1>
+          <div className="text-left">
+            <h1 className="text-3xl font-black text-text-primary leading-none">
+              Re<span className="text-primary">Boost</span>
+            </h1>
+            <p className="text-[11px] text-muted font-semibold tracking-widest uppercase">Your Life</p>
+          </div>
         </div>
-        <p className="text-text-secondary text-sm">Family fitness. Friendly competition.</p>
+        <p className="text-text-secondary text-sm mt-2">Family fitness. Friendly competition. 🏆</p>
       </div>
 
-      {/* Card */}
-      <div className="w-full max-w-sm bg-surface border border-border rounded-2xl p-6">
-        {/* Tab toggle */}
-        <div className="flex bg-surface-2 rounded-xl p-1 mb-6">
-          {(["login", "signup"] as const).map((m) => (
-            <button
-              key={m}
-              onClick={() => { setMode(m); setError(""); }}
-              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
-                mode === m
-                  ? "bg-primary text-bg"
-                  : "text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              {m === "login" ? "Log In" : "Sign Up"}
-            </button>
-          ))}
-        </div>
+      {/* Login card */}
+      <div className="w-full max-w-sm bg-surface border border-border rounded-3xl p-6 shadow-2xl">
+        <h2 className="text-lg font-bold text-text-primary mb-5">Welcome back 👋</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === "signup" && (
-            <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">
-                Your Name
-              </label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="e.g. Dad, Mom, Tyler"
-                className="w-full px-4 py-3 rounded-xl text-sm"
-                required
-              />
-            </div>
-          )}
-
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">
               Email
@@ -118,9 +71,11 @@ export default function AuthPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full px-4 py-3 rounded-xl text-sm"
+              placeholder="your@email.com"
+              className="w-full px-4 py-3.5 rounded-xl text-base"
               required
+              autoComplete="email"
+              inputMode="email"
             />
           </div>
 
@@ -133,41 +88,20 @@ export default function AuthPage() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min. 6 characters"
-                className="w-full px-4 py-3 pr-12 rounded-xl text-sm"
+                placeholder="Enter your password"
+                className="w-full px-4 py-3.5 pr-12 rounded-xl text-base"
                 required
-                minLength={6}
+                autoComplete="current-password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text-primary"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-text-primary p-1"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
           </div>
-
-          {mode === "signup" && (
-            <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wide">
-                Pick Your Color
-              </label>
-              <div className="flex gap-2 flex-wrap">
-                {AVATAR_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => setAvatarColor(color)}
-                    className={`w-8 h-8 rounded-full border-2 transition-all ${
-                      avatarColor === color ? "border-white scale-110" : "border-transparent"
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
 
           {error && (
             <div className="bg-red-900/30 border border-red-500/30 text-red-400 text-sm rounded-xl px-4 py-3">
@@ -178,16 +112,26 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3.5 bg-primary text-bg font-bold rounded-xl text-sm hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed glow-green"
+            className="w-full py-4 bg-primary text-bg font-black text-base rounded-xl hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed glow-green active:scale-95 transition-transform"
           >
-            {submitting ? "..." : mode === "login" ? "Log In" : "Create Account"}
+            {submitting ? "Logging in..." : "Let's Go! ⚡"}
           </button>
         </form>
-      </div>
 
-      <p className="mt-6 text-xs text-muted text-center max-w-xs">
-        By signing up, you agree to be part of the most competitive family on the block.
-      </p>
+        <p className="text-center text-xs text-muted mt-4">
+          No account yet? Your admin will set you up. 💪
+        </p>
+
+        {/* Hidden admin first-time setup link */}
+        <p className="text-center mt-2">
+          <button
+            onClick={() => router.push("/setup")}
+            className="text-[10px] text-border hover:text-muted transition-colors"
+          >
+            ·
+          </button>
+        </p>
+      </div>
     </div>
   );
 }
@@ -196,10 +140,10 @@ function LoadingScreen() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center animate-pulse">
+        <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center animate-pulse glow-green">
           <Zap className="w-7 h-7 text-bg" fill="currentColor" />
         </div>
-        <p className="text-muted text-sm">Loading...</p>
+        <p className="text-muted text-sm font-medium">Loading...</p>
       </div>
     </div>
   );

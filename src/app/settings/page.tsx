@@ -14,7 +14,8 @@ import {
 import { ExercisePreset, Family, AVATAR_COLORS, PRESET_ICONS } from "@/types";
 import Navigation from "@/components/Navigation";
 import AuthGuard from "@/components/AuthGuard";
-import { Settings, Plus, Trash2, Edit2, X, Check, LogOut, Copy, ChevronRight, ToggleLeft, ToggleRight } from "lucide-react";
+import { Settings, Plus, Trash2, Edit2, X, Check, LogOut, Copy, ChevronRight, ToggleLeft, ToggleRight, Shield, Dumbbell, Calendar, Brain, Rocket } from "lucide-react";
+import { ADMIN_EMAIL } from "@/lib/firebase";
 import clsx from "clsx";
 
 export default function SettingsPage() {
@@ -225,10 +226,52 @@ function SettingsView() {
           </div>
         </Section>
 
+        {/* Admin panel link */}
+        {firebaseUser?.email === ADMIN_EMAIL && (
+          <button
+            onClick={() => router.push("/admin")}
+            className="w-full flex items-center justify-between bg-surface border border-secondary/30 rounded-2xl p-4 text-secondary hover:border-secondary/60 transition-all active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-3">
+              <Shield className="w-5 h-5" />
+              <div className="text-left">
+                <p className="font-semibold">Admin Panel</p>
+                <p className="text-xs text-muted">Manage family members</p>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted" />
+          </button>
+        )}
+
+        {/* Phase 2 Roadmap */}
+        <div className="bg-surface border border-border rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+            <Rocket className="w-4 h-4 text-accent" />
+            <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide">Coming in Phase 2 🚀</span>
+          </div>
+          <div className="divide-y divide-border">
+            <RoadmapItem
+              icon={<Dumbbell className="w-4 h-4 text-primary" />}
+              title="Guided Workouts"
+              desc="Daily workout plans — the app tells you exactly what to do"
+            />
+            <RoadmapItem
+              icon={<Calendar className="w-4 h-4 text-secondary" />}
+              title="Weekly Schedule Builder"
+              desc="Set a training schedule: legs Mon, upper Wed, etc."
+            />
+            <RoadmapItem
+              icon={<Brain className="w-4 h-4 text-accent" />}
+              title="AI Workout Coach"
+              desc="Personalized plans based on your goals & history"
+            />
+          </div>
+        </div>
+
         {/* Logout */}
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-between bg-surface border border-border rounded-2xl p-4 text-red-400 hover:border-red-500/30 transition-all"
+          className="w-full flex items-center justify-between bg-surface border border-border rounded-2xl p-4 text-red-400 hover:border-red-500/30 transition-all active:scale-[0.99]"
         >
           <div className="flex items-center gap-3">
             <LogOut className="w-5 h-5" />
@@ -419,6 +462,20 @@ function PresetForm({
             {submitting ? "Saving..." : editing ? "Save Changes" : "Add Exercise"}
           </button>
         </form>
+      </div>
+    </div>
+  );
+}
+
+function RoadmapItem({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <div className="flex items-start gap-3 px-4 py-3">
+      <div className="w-8 h-8 rounded-lg bg-surface-2 flex items-center justify-center shrink-0 mt-0.5">
+        {icon}
+      </div>
+      <div>
+        <p className="text-sm font-semibold text-text-primary">{title}</p>
+        <p className="text-xs text-muted mt-0.5">{desc}</p>
       </div>
     </div>
   );

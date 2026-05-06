@@ -13,6 +13,7 @@ import {
   onSnapshot,
   Timestamp,
   serverTimestamp,
+  arrayUnion,
   limit,
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -57,6 +58,11 @@ export async function updateUserProfile(
   updates: Partial<Pick<UserProfile, "displayName" | "avatarColor">>
 ): Promise<void> {
   await updateDoc(doc(db, "users", uid), updates);
+}
+
+export async function addUserToFamily(uid: string, familyId: string): Promise<void> {
+  await updateDoc(doc(db, "users", uid), { familyId });
+  await updateDoc(doc(db, "families", familyId), { members: arrayUnion(uid) });
 }
 
 // ─── Family ───────────────────────────────────────────────────────────────────
@@ -303,7 +309,7 @@ async function calculateStreak(userId: string): Promise<number> {
   const snap = await getDocs(q);
   if (snap.empty) return 0;
 
-  const dates = [...new Set(snap.docs.map((d) => d.data().date as string))].sort().reverse();
+  const dates = Array.from(new Set(snap.docs.map((d) => d.data().date as string))).sort().reverse();
   let streak = 0;
   const today = new Date();
 

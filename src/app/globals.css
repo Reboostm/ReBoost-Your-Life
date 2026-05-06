@@ -20,7 +20,22 @@ body {
 
 /* Mobile-first: content padded above bottom nav */
 main {
-  padding-bottom: 5rem;
+  padding-bottom: 6rem;
+}
+
+/* Prevent double-tap zoom on buttons */
+button, a {
+  touch-action: manipulation;
+}
+
+/* Better tap highlight */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Safe area for iPhones with home bar */
+nav {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Scrollbar */
