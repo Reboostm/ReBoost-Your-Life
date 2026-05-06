@@ -68,10 +68,8 @@ export async function addUserToFamily(uid: string, familyId: string): Promise<vo
 // ─── Family ───────────────────────────────────────────────────────────────────
 
 export async function createFamily(name: string, creatorUid: string): Promise<Family> {
-  const inviteCode = generateInviteCode();
   const ref = await addDoc(collection(db, "families"), {
     name,
-    inviteCode,
     members: [creatorUid],
     createdBy: creatorUid,
     createdAt: serverTimestamp(),
@@ -80,7 +78,7 @@ export async function createFamily(name: string, creatorUid: string): Promise<Fa
   return {
     id: ref.id,
     name,
-    inviteCode,
+    inviteCode: "",
     members: [creatorUid],
     createdBy: creatorUid,
     createdAt: new Date(),

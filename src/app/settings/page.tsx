@@ -16,7 +16,7 @@ import {
 import { ExercisePreset, Family, AVATAR_COLORS, PRESET_ICONS } from "@/types";
 import Navigation from "@/components/Navigation";
 import AuthGuard from "@/components/AuthGuard";
-import { Settings, Plus, Trash2, Edit2, X, Check, LogOut, Copy, ChevronRight, ToggleLeft, ToggleRight, Shield, Dumbbell, Calendar, Brain, Rocket } from "lucide-react";
+import { Settings, Plus, Trash2, Edit2, X, Check, LogOut, ChevronRight, ToggleLeft, ToggleRight, Shield, Dumbbell, Calendar, Brain, Rocket } from "lucide-react";
 import { ADMIN_EMAIL } from "@/lib/firebase";
 import clsx from "clsx";
 
@@ -38,7 +38,6 @@ function SettingsView() {
   const [editingPreset, setEditingPreset] = useState<ExercisePreset | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(userProfile?.displayName ?? "");
-  const [codeCopied, setCodeCopied] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!userProfile?.familyId) return;
@@ -69,13 +68,6 @@ function SettingsView() {
     if (!confirm("Delete this exercise? Past workouts won't be affected.")) return;
     await deletePreset(id);
     setPresets((prev) => prev.filter((p) => p.id !== id));
-  };
-
-  const copyCode = () => {
-    if (!family?.inviteCode) return;
-    navigator.clipboard.writeText(family.inviteCode);
-    setCodeCopied(true);
-    setTimeout(() => setCodeCopied(false), 2000);
   };
 
   const handleLogout = async () => {
@@ -159,23 +151,7 @@ function SettingsView() {
           <Section title="Family">
             <div className="p-4">
               <p className="text-text-primary font-semibold mb-1">{family.name}</p>
-              <p className="text-xs text-muted mb-3">{family.members.length} member{family.members.length !== 1 ? "s" : ""}</p>
-              <div className="flex items-center gap-3 bg-surface-2 rounded-xl px-4 py-3">
-                <div className="flex-1">
-                  <p className="text-xs text-muted mb-0.5">Invite Code</p>
-                  <p className="font-black text-xl tracking-widest text-primary">{family.inviteCode}</p>
-                </div>
-                <button
-                  onClick={copyCode}
-                  className={clsx(
-                    "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all",
-                    codeCopied ? "bg-primary text-bg" : "bg-surface-3 text-text-secondary hover:text-text-primary"
-                  )}
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                  {codeCopied ? "Copied!" : "Copy"}
-                </button>
-              </div>
+              <p className="text-xs text-muted">{family.members.length} member{family.members.length !== 1 ? "s" : ""}</p>
             </div>
           </Section>
         )}
