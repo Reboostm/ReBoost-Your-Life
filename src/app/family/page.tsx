@@ -5,16 +5,23 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { createFamily, joinFamily } from "@/lib/firestore";
-import { Users, Plus, Hash, Zap } from "lucide-react";
+import { createFamily, createUserProfile } from "@/lib/firestore";
+import { ADMIN_EMAIL } from "@/lib/firebase";
+import { AVATAR_COLORS } from "@/types";
+import { Zap } from "lucide-react";
+import clsx from "clsx";
 
 export default function FamilyPage() {
   const { firebaseUser, userProfile, loading, refreshProfile } = useAuth();
   const router = useRouter();
 
-  const [tab, setTab] = useState<"create" | "join">("create");
+  // Step 1: fix missing profile (signup Firestore write failed)
+  // Step 2: create family (admin only)
+  const [step, setStep] = useState<"profile" | "family">("profile");
+
+  const [displayName, setDisplayName] = useState("Admin");
+  const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0]);
   const [familyName, setFamilyName] = useState("");
-  const [inviteCode, setInviteCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -22,6 +29,27 @@ export default function FamilyPage() {
     if (!loading && !firebaseUser) router.replace("/");
     if (!loading && userProfile?.familyId) router.replace("/dashboard");
   }, [loading, firebaseUser, userProfile, router]);
+
+  useEffect(() => {
+    // If profile exists, skip profile step
+    if (userProfile) setStep("family");
+  }, [userProfile]);
+
+  const handleProfileSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!firebaseUser) return;
+    setError("");
+    setSubmitting(true);
+    try {
+      await createUserProfile(firebaseUser.uid, firebaseUser.email ?? "", displayName.trim(), avatarColor);
+      await refreshProfile();
+      setStep("family");
+    } catch {
+      setError("Failed to save profile. Make sure Firestore rules are published.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,25 +67,7 @@ export default function FamilyPage() {
     }
   };
 
-  const handleJoin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!firebaseUser) return;
-    setError("");
-    setSubmitting(true);
-    try {
-      const family = await joinFamily(inviteCode.trim(), firebaseUser.uid);
-      if (!family) {
-        setError("Invalid invite code. Check with your family member.");
-      } else {
-        await refreshProfile();
-        router.push("/dashboard");
-      }
-    } catch {
-      setError("Failed to join family. Try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const isAdmin = firebaseUser?.email === ADMIN_EMAIL;
 
   if (loading || !firebaseUser) return null;
 
@@ -67,41 +77,59 @@ export default function FamilyPage() {
         <div className="inline-flex items-center gap-2 mb-2">
           <Zap className="w-6 h-6 text-primary" fill="currentColor" />
           <h1 className="text-xl font-black text-text-primary">
-            Welcome, <span className="text-primary">{userProfile?.displayName}</span>!
+            Welcome{userProfile?.displayName ? `, ${userProfile.displayName}` : ""}!
           </h1>
         </div>
-        <p className="text-text-secondary text-sm">Set up your family crew to get started</p>
+        <p className="text-text-secondary text-sm">
+          {step === "profile" ? "First, set up your profile" : "Create your family group"}
+        </p>
       </div>
 
       <div className="w-full max-w-sm bg-surface border border-border rounded-2xl p-6">
-        {/* Tabs */}
-        <div className="flex bg-surface-2 rounded-xl p-1 mb-6">
-          <button
-            onClick={() => { setTab("create"); setError(""); }}
-            className={`flex-1 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
-              tab === "create" ? "bg-primary text-bg" : "text-text-secondary hover:text-text-primary"
-            }`}
-          >
-            <Plus className="w-4 h-4" />
-            Create
-          </button>
-          <button
-            onClick={() => { setTab("join"); setError(""); }}
-            className={`flex-1 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
-              tab === "join" ? "bg-primary text-bg" : "text-text-secondary hover:text-text-primary"
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            Join
-          </button>
-        </div>
-
-        {tab === "create" ? (
+        {step === "profile" ? (
+          <form onSubmit={handleProfileSave} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">Your Name</label>
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="e.g. Admin, Dad, Mom"
+                className="w-full px-4 py-3 rounded-xl text-sm"
+                required
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wide">Your Color</label>
+              <div className="flex gap-2 flex-wrap">
+                {AVATAR_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setAvatarColor(color)}
+                    className={clsx(
+                      "w-9 h-9 rounded-full border-2 transition-all active:scale-90",
+                      avatarColor === color ? "border-white scale-110" : "border-transparent"
+                    )}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            </div>
+            {error && <ErrorBox msg={error} />}
+            <button
+              type="submit"
+              disabled={submitting || !displayName.trim()}
+              className="w-full py-3.5 bg-primary text-bg font-bold rounded-xl text-sm hover:bg-primary-dark disabled:opacity-50 active:scale-95 transition-transform"
+            >
+              {submitting ? "Saving..." : "Save Profile →"}
+            </button>
+          </form>
+        ) : isAdmin ? (
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">
-                Family Name
-              </label>
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">Family Name</label>
               <input
                 type="text"
                 value={familyName}
@@ -109,51 +137,33 @@ export default function FamilyPage() {
                 placeholder="e.g. The Johnson Crew"
                 className="w-full px-4 py-3 rounded-xl text-sm"
                 required
+                autoFocus
               />
             </div>
-            <p className="text-xs text-muted">
-              You&apos;ll get a 6-letter invite code to share with your family.
-            </p>
+            <p className="text-xs text-muted">After creating, add members from the Admin Panel in Settings.</p>
             {error && <ErrorBox msg={error} />}
             <button
               type="submit"
               disabled={submitting || !familyName.trim()}
-              className="w-full py-3.5 bg-primary text-bg font-bold rounded-xl text-sm hover:bg-primary-dark disabled:opacity-50 glow-green"
+              className="w-full py-3.5 bg-primary text-bg font-bold rounded-xl text-sm hover:bg-primary-dark disabled:opacity-50 glow-green active:scale-95 transition-transform"
             >
               {submitting ? "Creating..." : "Create Family"}
             </button>
           </form>
         ) : (
-          <form onSubmit={handleJoin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">
-                Invite Code
-              </label>
-              <div className="relative">
-                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                <input
-                  type="text"
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                  placeholder="ABC123"
-                  className="w-full pl-9 pr-4 py-3 rounded-xl text-sm font-mono tracking-widest"
-                  maxLength={6}
-                  required
-                />
-              </div>
+          <div className="text-center py-4 space-y-3">
+            <div className="w-14 h-14 rounded-full bg-surface-2 flex items-center justify-center mx-auto">
+              <Zap className="w-7 h-7 text-primary" fill="currentColor" />
             </div>
-            <p className="text-xs text-muted">
-              Get this code from a family member who already created a group.
-            </p>
-            {error && <ErrorBox msg={error} />}
+            <p className="text-text-primary font-semibold">You&apos;re almost in!</p>
+            <p className="text-text-secondary text-sm">Ask your admin to add you to the family group. Once they do, refresh this page.</p>
             <button
-              type="submit"
-              disabled={submitting || inviteCode.length !== 6}
-              className="w-full py-3.5 bg-secondary text-white font-bold rounded-xl text-sm hover:opacity-90 disabled:opacity-50 glow-orange"
+              onClick={() => refreshProfile().then(() => {})}
+              className="mt-2 px-5 py-2.5 bg-surface-2 text-text-primary text-sm font-semibold rounded-xl hover:bg-surface-3 active:scale-95 transition-transform"
             >
-              {submitting ? "Joining..." : "Join Family"}
+              Refresh
             </button>
-          </form>
+          </div>
         )}
       </div>
     </div>
