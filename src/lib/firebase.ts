@@ -11,16 +11,17 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = getApps().find((a) => a.name === "[DEFAULT]") ?? initializeApp(firebaseConfig);
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// Secondary app used by admin to create users without signing out the admin session
+// Secondary app used by admin to create users without signing out the admin session (lazy-loaded)
 let secondaryApp: FirebaseApp | null = null;
 export function getSecondaryAuth() {
   if (!secondaryApp) {
-    secondaryApp = getApps().find((a) => a.name === "secondary") ?? initializeApp(firebaseConfig, "secondary");
+    const existing = getApps().find((a) => a.name === "secondary");
+    secondaryApp = existing ?? initializeApp(firebaseConfig, "secondary");
   }
   return getAuth(secondaryApp);
 }
