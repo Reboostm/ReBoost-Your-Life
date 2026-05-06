@@ -6,7 +6,13 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git config *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(vercel --version)",
+      "Bash(npm install *)",
+      "Bash(vercel env *)",
+      "Bash(vercel link *)",
+      "Bash(vercel --prod --yes)",
+      "Bash(git commit *)"
     ]
   }
 }
