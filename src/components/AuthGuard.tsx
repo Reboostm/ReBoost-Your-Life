@@ -10,16 +10,12 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading) {
-      if (!firebaseUser) {
-        router.replace("/");
-      } else if (!userProfile?.familyId) {
-        router.replace("/family");
-      }
+    if (!loading && !firebaseUser) {
+      router.replace("/");
     }
-  }, [loading, firebaseUser, userProfile, router]);
+  }, [loading, firebaseUser, router]);
 
-  if (loading || !firebaseUser || !userProfile?.familyId) {
+  if (loading || !firebaseUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg">
         <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center animate-pulse">
