@@ -207,6 +207,10 @@ export async function removeReaction(workoutId: string, userId: string): Promise
   await updateDoc(doc(db, "workouts", workoutId), { reactions });
 }
 
+export async function deleteWorkout(workoutId: string): Promise<void> {
+  await deleteDoc(doc(db, "workouts", workoutId));
+}
+
 function docToWorkout(d: { id: string; data: () => Record<string, unknown> }): WorkoutLog {
   const data = d.data();
   return {

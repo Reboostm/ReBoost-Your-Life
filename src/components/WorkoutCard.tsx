@@ -2,20 +2,22 @@
 
 import { useState } from "react";
 import { WorkoutLog, REACTION_EMOJIS, ReactionEmoji } from "@/types";
-import { addReaction, removeReaction } from "@/lib/firestore";
+import { addReaction, removeReaction, deleteWorkout } from "@/lib/firestore";
 import { getRelativeTime, formatDuration } from "@/lib/utils";
-import { Footprints, Clock, Repeat, Star } from "lucide-react";
+import { Footprints, Clock, Repeat, Star, Trash2 } from "lucide-react";
 import clsx from "clsx";
 
 interface Props {
   workout: WorkoutLog;
   currentUserId: string;
   canReact: boolean;
+  userNameMap?: Record<string, string>;
 }
 
-export default function WorkoutCard({ workout, currentUserId, canReact }: Props) {
+export default function WorkoutCard({ workout, currentUserId, canReact, userNameMap = {} }: Props) {
   const [showReactions, setShowReactions] = useState(false);
   const [optimisticReactions, setOptimisticReactions] = useState(workout.reactions);
+  const [deleting, setDeleting] = useState(false);
 
   const myReaction = optimisticReactions[currentUserId];
   const reactionCounts = Object.values(optimisticReactions).reduce(
@@ -40,12 +42,25 @@ export default function WorkoutCard({ workout, currentUserId, canReact }: Props)
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm(`Delete "${workout.presetName}"?`)) return;
+    setDeleting(true);
+    try {
+      await deleteWorkout(workout.id);
+    } catch (err) {
+      console.error("Failed to delete workout:", err);
+      alert("Failed to delete workout");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const isOwn = workout.userId === currentUserId;
   const stepsDisplay = workout.totalSteps.toLocaleString();
   const setsDisplay = workout.sets > 1 ? `×${workout.sets}` : null;
 
   return (
-    <div className="bg-surface border border-border rounded-2xl p-4 animate-fade-in">
+    <div className="bg-surface border border-border rounded-2xl p-4 animate-fade-in group">
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
@@ -71,7 +86,19 @@ export default function WorkoutCard({ workout, currentUserId, canReact }: Props)
             <p className="text-xs text-muted">{getRelativeTime(workout.timestamp)}</p>
           </div>
         </div>
-        <span className="text-lg">{workout.presetName.split(" ")[0]}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{workout.presetName.split(" ")[0]}</span>
+          {isOwn && (
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="text-muted hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+              title="Delete workout"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Exercise name */}
@@ -115,20 +142,27 @@ export default function WorkoutCard({ workout, currentUserId, canReact }: Props)
       <div className="flex items-center gap-2 pt-2 border-t border-border">
         {/* Existing reactions */}
         <div className="flex gap-1 flex-wrap flex-1">
-          {Object.entries(reactionCounts).map(([emoji, count]) => (
-            <button
-              key={emoji}
-              onClick={() => canReact && !isOwn && handleReact(emoji as ReactionEmoji)}
-              className={clsx(
-                "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all",
-                myReaction === emoji
-                  ? "bg-primary/20 border-primary/40 text-primary"
-                  : "bg-surface-2 border-border text-text-secondary hover:border-border"
-              )}
-            >
-              {emoji} <span>{count}</span>
-            </button>
-          ))}
+          {Object.entries(reactionCounts).map(([emoji, count]) => {
+            const reactedUsers = Object.entries(optimisticReactions)
+              .filter(([, e]) => e === emoji)
+              .map(([uid]) => userNameMap[uid] || uid)
+              .join(", ");
+            return (
+              <button
+                key={emoji}
+                onClick={() => canReact && !isOwn && handleReact(emoji as ReactionEmoji)}
+                className={clsx(
+                  "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all",
+                  myReaction === emoji
+                    ? "bg-primary/20 border-primary/40 text-primary"
+                    : "bg-surface-2 border-border text-text-secondary hover:border-border"
+                )}
+                title={reactedUsers}
+              >
+                {emoji} <span>{count}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* React button (not on own workouts) */}

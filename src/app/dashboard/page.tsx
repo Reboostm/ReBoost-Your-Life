@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { subscribeToFamilyWorkouts, getUserWorkoutsForPeriod } from "@/lib/firestore";
+import { subscribeToFamilyWorkouts, getUserWorkoutsForPeriod, getFamilyMembers } from "@/lib/firestore";
 import { WorkoutLog } from "@/types";
 import { todayString, formatDuration } from "@/lib/utils";
 import WorkoutCard from "@/components/WorkoutCard";
@@ -24,6 +24,16 @@ function Dashboard() {
   const { firebaseUser, userProfile } = useAuth();
   const [workouts, setWorkouts] = useState<WorkoutLog[]>([]);
   const [todayStats, setTodayStats] = useState({ steps: 0, workouts: 0, bestTime: 0 });
+  const [userNameMap, setUserNameMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (userProfile?.familyId) {
+      getFamilyMembers(userProfile.familyId).then((members) => {
+        const map = Object.fromEntries(members.map(m => [m.uid, m.displayName]));
+        setUserNameMap(map);
+      });
+    }
+  }, [userProfile?.familyId]);
 
   useEffect(() => {
     if (!firebaseUser?.uid) return;
@@ -127,6 +137,7 @@ function Dashboard() {
                   workout={w}
                   currentUserId={firebaseUser?.uid ?? ""}
                   canReact={!!userProfile?.familyId}
+                  userNameMap={userNameMap}
                 />
               ))}
             </div>
