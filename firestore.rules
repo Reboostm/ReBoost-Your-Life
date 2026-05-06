@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users can read/write their own profile
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Family members can read families; only members can update member list
+    match /families/{familyId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null &&
+        request.auth.uid in resource.data.members ||
+        request.auth.uid == resource.data.createdBy;
+    }
+
+    // Family members can read all workouts in their family; own workouts only for write
+    match /workouts/{workoutId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // Allow anyone in family to update reactions field only
+      allow update: if request.auth != null &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']);
+    }
+
+    // Exercise presets: family members can read; authenticated users can create/edit
+    match /presets/{presetId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null &&
+        request.auth.uid == resource.data.createdBy;
+    }
+
+    // Goals: users can only read/write their own goals
+    match /goals/{goalId} {
+      allow read: if request.auth != null &&
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.userId;
+      allow delete: if request.auth != null &&
+        request.auth.uid == resource.data.userId;
+    }
+  }
+}

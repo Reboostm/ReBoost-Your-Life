@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  background-color: #080810;
+  color: #f0f0ff;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Mobile-first: content padded above bottom nav */
+main {
+  padding-bottom: 5rem;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #10101e;
+}
+::-webkit-scrollbar-thumb {
+  background: #252540;
+  border-radius: 2px;
+}
+
+/* Input base */
+input, textarea, select {
+  background-color: #1a1a2e;
+  color: #f0f0ff;
+  border: 1px solid #252540;
+  border-radius: 0.5rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #00e676;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #6b6b8a;
+}
+
+/* Number input arrows hidden */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Smooth transitions */
+button {
+  transition: all 0.15s ease;
+}
+
+/* Glow effect on primary elements */
+.glow-green {
+  box-shadow: 0 0 20px rgba(0, 230, 118, 0.3);
+}
+
+.glow-orange {
+  box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+}
+
+/* Card hover */
+.card-hover:hover {
+  border-color: #252540;
+  transform: translateY(-1px);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #00e676 0%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Progress bar animation */
+@keyframes fillBar {
+  from { width: 0; }
+}
+
+.progress-fill {
+  animation: fillBar 0.8s ease-out forwards;
+}
