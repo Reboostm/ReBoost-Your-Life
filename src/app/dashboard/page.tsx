@@ -39,8 +39,8 @@ function Dashboard() {
     if (!firebaseUser?.uid) return;
 
     if (userProfile?.familyId) {
-      // Load family workouts
-      const unsub = subscribeToFamilyWorkouts(userProfile.familyId, setWorkouts);
+      // Load family workouts (limit to 20 for mobile performance)
+      const unsub = subscribeToFamilyWorkouts(userProfile.familyId, setWorkouts, 20);
       return unsub;
     } else {
       // Load user's solo workouts for the year
