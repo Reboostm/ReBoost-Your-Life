@@ -6,7 +6,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
-      allow update: if request.auth != null && (request.auth.uid == userId || request.auth.token.email == 'marketinggreboost@gmail.com');
+      allow update: if request.auth != null && (request.auth.uid == userId || request.auth.token.email == 'marketingreboost@gmail.com');
     }
 
     // Family members can read families; authenticated users can update
