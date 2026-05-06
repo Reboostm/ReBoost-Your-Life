@@ -61,8 +61,19 @@ export async function updateUserProfile(
 }
 
 export async function addUserToFamily(uid: string, familyId: string): Promise<void> {
+  // Check if family doc exists; if not, recreate it
+  const familyDoc = await getDoc(doc(db, "families", familyId));
+  if (!familyDoc.exists()) {
+    await setDoc(doc(db, "families", familyId), {
+      name: "Family",
+      members: [uid],
+      createdBy: uid,
+      createdAt: serverTimestamp(),
+    });
+  } else {
+    await updateDoc(doc(db, "families", familyId), { members: arrayUnion(uid) });
+  }
   await updateDoc(doc(db, "users", uid), { familyId });
-  await updateDoc(doc(db, "families", familyId), { members: arrayUnion(uid) });
 }
 
 // ─── Family ───────────────────────────────────────────────────────────────────
