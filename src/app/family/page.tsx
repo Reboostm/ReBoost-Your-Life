@@ -12,7 +12,7 @@ import { Zap } from "lucide-react";
 import clsx from "clsx";
 
 export default function FamilyPage() {
-  const { firebaseUser, userProfile, loading, refreshProfile } = useAuth();
+  const { firebaseUser, userProfile, loading, refreshProfile, logout } = useAuth();
   const router = useRouter();
 
   // Step 1: fix missing profile (signup Firestore write failed)
@@ -157,12 +157,23 @@ export default function FamilyPage() {
             </div>
             <p className="text-text-primary font-semibold">You&apos;re almost in!</p>
             <p className="text-text-secondary text-sm">Ask your admin to add you to the family group. Once they do, refresh this page.</p>
-            <button
-              onClick={() => refreshProfile().then(() => {})}
-              className="mt-2 px-5 py-2.5 bg-surface-2 text-text-primary text-sm font-semibold rounded-xl hover:bg-surface-3 active:scale-95 transition-transform"
-            >
-              Refresh
-            </button>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => refreshProfile().then(() => {})}
+                className="flex-1 px-5 py-2.5 bg-surface-2 text-text-primary text-sm font-semibold rounded-xl hover:bg-surface-3 active:scale-95 transition-transform"
+              >
+                Refresh
+              </button>
+              <button
+                onClick={async () => {
+                  await logout();
+                  router.replace("/");
+                }}
+                className="flex-1 px-5 py-2.5 bg-red-900/30 text-red-400 text-sm font-semibold rounded-xl hover:bg-red-900/50 active:scale-95 transition-transform"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         )}
       </div>
