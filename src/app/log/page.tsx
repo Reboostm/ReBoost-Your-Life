@@ -10,7 +10,7 @@ import { ExercisePreset } from "@/types";
 import { parseDuration, formatDuration, todayString } from "@/lib/utils";
 import Navigation from "@/components/Navigation";
 import AuthGuard from "@/components/AuthGuard";
-import { CheckCircle, ChevronLeft, Info } from "lucide-react";
+import { CheckCircle, ChevronLeft, Info, ToggleLeft, ToggleRight } from "lucide-react";
 import clsx from "clsx";
 
 export default function LogPage() {
@@ -28,6 +28,7 @@ function LogWorkout() {
   const [presets, setPresets] = useState<ExercisePreset[]>([]);
   const [selectedPreset, setSelectedPreset] = useState<ExercisePreset | null>(null);
   const [sets, setSets] = useState(1);
+  const [countBoth, setCountBoth] = useState(true);
   const [durationInput, setDurationInput] = useState("");
   const [notes, setNotes] = useState("");
   const [durationError, setDurationError] = useState("");
@@ -41,7 +42,7 @@ function LogWorkout() {
 
   const parsedDuration = parseDuration(durationInput);
   const totalSteps = selectedPreset
-    ? selectedPreset.stepsPerSet * sets * (selectedPreset.countBothDirections ? 2 : 1)
+    ? selectedPreset.stepsPerSet * sets * (countBoth ? 2 : 1)
     : 0;
 
   const handleDurationBlur = () => {
@@ -76,7 +77,7 @@ function LogWorkout() {
         sets,
         stepsPerSet: selectedPreset.stepsPerSet,
         totalSteps,
-        countBothDirections: selectedPreset.countBothDirections,
+        countBothDirections: countBoth,
         durationSeconds: dur,
         durationDisplay: formatDuration(dur),
         date: todayString(),
@@ -86,8 +87,9 @@ function LogWorkout() {
       setTimeout(() => {
         router.push("/dashboard");
       }, 1500);
-    } catch {
-      alert("Failed to log workout. Try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to log workout";
+      alert(msg);
     } finally {
       setSubmitting(false);
     }
@@ -123,7 +125,7 @@ function LogWorkout() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 pt-4">
+      <main className="max-w-lg mx-auto px-4 pt-4 pb-28">
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Exercise selection */}
           <div>
@@ -195,7 +197,7 @@ function LogWorkout() {
                     +
                   </button>
                 </div>
-                {selectedPreset.countBothDirections && (
+                {countBoth && (
                   <div className="flex items-start gap-2 mt-2 px-1">
                     <Info className="w-3.5 h-3.5 text-muted mt-0.5 shrink-0" />
                     <p className="text-xs text-muted">
@@ -203,6 +205,35 @@ function LogWorkout() {
                     </p>
                   </div>
                 )}
+              </div>
+
+              {/* Count Direction Toggle */}
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wide">Count Direction</label>
+                <button
+                  type="button"
+                  onClick={() => setCountBoth(!countBoth)}
+                  className={clsx(
+                    "w-full flex items-center justify-between p-3 rounded-xl border transition-all",
+                    countBoth ? "border-primary/40 bg-primary/10" : "border-border bg-surface"
+                  )}
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary text-left">
+                      {countBoth ? "Yes — count up + down" : "No — up only"}
+                    </p>
+                    <p className="text-xs text-muted text-left mt-0.5">
+                      {countBoth
+                        ? `${selectedPreset.stepsPerSet} × 2 = ${selectedPreset.stepsPerSet * 2} per set`
+                        : `${selectedPreset.stepsPerSet} steps per set`}
+                    </p>
+                  </div>
+                  {countBoth ? (
+                    <ToggleRight className="w-6 h-6 text-primary shrink-0" />
+                  ) : (
+                    <ToggleLeft className="w-6 h-6 text-muted shrink-0" />
+                  )}
+                </button>
               </div>
 
               {/* Duration */}

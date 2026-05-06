@@ -345,9 +345,9 @@ function PresetForm({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 flex items-end justify-center px-4 pb-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-end justify-center px-4 pb-28" onClick={onClose}>
       <div
-        className="bg-surface border border-border rounded-3xl p-5 w-full max-w-sm animate-slide-up"
+        className="bg-surface border border-border rounded-3xl p-5 w-full max-w-sm animate-slide-up mb-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
@@ -357,7 +357,7 @@ function PresetForm({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
           {/* Icon picker */}
           <div>
             <label className="block text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wide">Icon</label>
