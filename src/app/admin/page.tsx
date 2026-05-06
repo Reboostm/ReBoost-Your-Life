@@ -37,6 +37,7 @@ function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [successMsg, setSuccessMsg] = useState("");
   const [creatingFamily, setCreatingFamily] = useState(false);
+  const [addingSelf, setAddingSelf] = useState(false);
 
   const handleCreateFamily = async () => {
     if (!firebaseUser?.uid) return;
@@ -50,6 +51,22 @@ function AdminPanel() {
       console.error("Failed to create family:", err);
     } finally {
       setCreatingFamily(false);
+    }
+  };
+
+  const handleAddMyselfToFamily = async () => {
+    if (!firebaseUser?.uid || !userProfile?.familyId) return;
+    setAddingSelf(true);
+    try {
+      await addUserToFamily(firebaseUser.uid, userProfile.familyId);
+      setSuccessMsg("Added yourself to the family!");
+      loadMembers();
+      setTimeout(() => setSuccessMsg(""), 3000);
+    } catch (err) {
+      console.error("Failed to add self:", err);
+      alert("Failed to add yourself. Check console.");
+    } finally {
+      setAddingSelf(false);
     }
   };
 
@@ -118,7 +135,16 @@ function AdminPanel() {
           {loading ? (
             <div className="p-6 text-center text-muted text-sm">Loading...</div>
           ) : members.length === 0 ? (
-            <div className="p-6 text-center text-muted text-sm">No members yet.</div>
+            <div className="p-6 text-center space-y-3">
+              <p className="text-muted text-sm">No members yet.</p>
+              <button
+                onClick={handleAddMyselfToFamily}
+                disabled={addingSelf}
+                className="w-full py-2 bg-primary/20 text-primary text-sm font-semibold rounded-lg hover:bg-primary/30 disabled:opacity-50"
+              >
+                {addingSelf ? "Adding..." : "Add Myself to Family"}
+              </button>
+            </div>
           ) : (
             <div className="divide-y divide-border">
               {members.map((m) => (
