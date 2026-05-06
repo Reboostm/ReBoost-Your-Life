@@ -55,16 +55,21 @@ function AdminPanel() {
   };
 
   const handleAddMyselfToFamily = async () => {
-    if (!firebaseUser?.uid || !userProfile?.familyId) return;
+    if (!firebaseUser?.uid || !userProfile?.familyId) {
+      alert(`Missing data: uid=${firebaseUser?.uid}, familyId=${userProfile?.familyId}`);
+      return;
+    }
     setAddingSelf(true);
     try {
+      console.log("Adding user to family:", { uid: firebaseUser.uid, familyId: userProfile.familyId });
       await addUserToFamily(firebaseUser.uid, userProfile.familyId);
       setSuccessMsg("Added yourself to the family!");
       loadMembers();
       setTimeout(() => setSuccessMsg(""), 3000);
-    } catch (err) {
-      console.error("Failed to add self:", err);
-      alert("Failed to add yourself. Check console.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("Failed to add self:", msg);
+      alert(`Error: ${msg}`);
     } finally {
       setAddingSelf(false);
     }

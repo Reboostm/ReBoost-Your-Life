@@ -9,13 +9,11 @@ service cloud.firestore {
       allow update: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Family members can read families; only members can update member list
+    // Family members can read families; authenticated users can update
     match /families/{familyId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
-      allow update: if request.auth != null &&
-        request.auth.uid in resource.data.members ||
-        request.auth.uid == resource.data.createdBy;
+      allow update: if request.auth != null;
     }
 
     // Family members can read all workouts in their family; own workouts only for write
