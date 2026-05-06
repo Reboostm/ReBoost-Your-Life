@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import dynamic from "next/dynamic";
 import "./globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +21,21 @@ export const viewport: Viewport = {
   userScalable: false,
   viewportFit: "cover",
 };
+
+// Client-only: Firebase must never run on the server
+const AuthProvider = dynamic(
+  () => import("@/contexts/AuthContext").then((m) => ({ default: m.AuthProvider })),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{ background: "#080810", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 48, height: 48, borderRadius: 12, background: "#00e676", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="#080810"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+      </div>
+    ),
+  }
+);
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
