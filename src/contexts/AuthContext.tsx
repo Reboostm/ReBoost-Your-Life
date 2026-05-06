@@ -8,8 +8,8 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
 } from "firebase/auth";
-import { auth } from "@/lib/firebase";
-import { createUserProfile, getUserProfile } from "@/lib/firestore";
+import { auth, ADMIN_EMAIL } from "@/lib/firebase";
+import { createUserProfile, getUserProfile, createFamily } from "@/lib/firestore";
 import { UserProfile, AVATAR_COLORS } from "@/types";
 
 interface AuthContextType {
@@ -35,6 +35,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (user) {
         const profile = await getUserProfile(user.uid);
         setUserProfile(profile);
+
+        if (user.email === ADMIN_EMAIL && profile && !profile.familyId) {
+          await createFamily("Family", user.uid);
+          const updatedProfile = await getUserProfile(user.uid);
+          setUserProfile(updatedProfile);
+        }
       } else {
         setUserProfile(null);
       }
@@ -51,6 +57,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ) => {
     const { user } = await createUserWithEmailAndPassword(auth, email, password);
     await createUserProfile(user.uid, email, displayName, avatarColor);
+
+    if (email === ADMIN_EMAIL) {
+      await createFamily("Family", user.uid);
+    }
+
     const profile = await getUserProfile(user.uid);
     setUserProfile(profile);
   };

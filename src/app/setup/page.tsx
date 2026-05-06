@@ -28,7 +28,7 @@ export default function SetupPage() {
     setSubmitting(true);
     try {
       await signup(email, password, displayName.trim(), avatarColor);
-      router.push("/family");
+      router.push("/dashboard");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "";
       if (msg.includes("email-already-in-use")) {
