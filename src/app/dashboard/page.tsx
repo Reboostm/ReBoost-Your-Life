@@ -26,10 +26,20 @@ function Dashboard() {
   const [todayStats, setTodayStats] = useState({ steps: 0, workouts: 0, bestTime: 0 });
 
   useEffect(() => {
-    if (!userProfile?.familyId) return;
-    const unsub = subscribeToFamilyWorkouts(userProfile.familyId, setWorkouts);
-    return unsub;
-  }, [userProfile?.familyId]);
+    if (!firebaseUser?.uid) return;
+
+    if (userProfile?.familyId) {
+      // Load family workouts
+      const unsub = subscribeToFamilyWorkouts(userProfile.familyId, setWorkouts);
+      return unsub;
+    } else {
+      // Load user's solo workouts for the year
+      const today = todayString();
+      const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+      const yearStart = startOfYear.toISOString().split('T')[0];
+      getUserWorkoutsForPeriod(firebaseUser.uid, yearStart, today).then(setWorkouts);
+    }
+  }, [userProfile?.familyId, firebaseUser?.uid]);
 
   useEffect(() => {
     if (!firebaseUser?.uid) return;
@@ -102,13 +112,13 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Family Feed */}
+        {/* Activity Feed */}
         <div>
           <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wide mb-3">
-            Family Activity
+            {userProfile?.familyId ? "Family Activity" : "Your Workouts"}
           </h3>
           {workouts.length === 0 ? (
-            <EmptyFeed />
+            <EmptyFeed isInFamily={!!userProfile?.familyId} />
           ) : (
             <div className="space-y-3">
               {workouts.map((w) => (
@@ -116,9 +126,15 @@ function Dashboard() {
                   key={w.id}
                   workout={w}
                   currentUserId={firebaseUser?.uid ?? ""}
-                  canReact={true}
+                  canReact={!!userProfile?.familyId}
                 />
               ))}
+            </div>
+          )}
+          {!userProfile?.familyId && (
+            <div className="bg-surface-2 border border-border rounded-2xl p-4 mt-4 text-center text-sm">
+              <p className="text-text-secondary">You're not in a family yet.</p>
+              <p className="text-muted text-xs mt-1">Contact your admin to be added to a group.</p>
             </div>
           )}
         </div>
@@ -139,12 +155,16 @@ function TodayStat({ icon, value, label }: { icon: React.ReactNode; value: strin
   );
 }
 
-function EmptyFeed() {
+function EmptyFeed({ isInFamily }: { isInFamily: boolean }) {
   return (
     <div className="bg-surface border border-dashed border-border rounded-2xl p-8 text-center">
       <div className="text-4xl mb-3">🏃</div>
       <p className="text-text-secondary font-semibold mb-1">No workouts yet</p>
-      <p className="text-muted text-sm">Hit the + button to log your first workout and get this party started!</p>
+      <p className="text-muted text-sm">
+        {isInFamily
+          ? "Hit the + button to log your first workout and get this party started!"
+          : "Log your first workout and show your family what you're made of!"}
+      </p>
     </div>
   );
 }

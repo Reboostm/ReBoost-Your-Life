@@ -19,13 +19,9 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (!loading && firebaseUser) {
-      if (!userProfile?.familyId) {
-        router.replace("/family");
-      } else {
-        router.replace("/dashboard");
-      }
+      router.replace("/dashboard");
     }
-  }, [loading, firebaseUser, userProfile, router]);
+  }, [loading, firebaseUser, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
