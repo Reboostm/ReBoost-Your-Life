@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 import "./globals.css";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ export const viewport: Viewport = {
 };
 
 // Client-only: Firebase must never run on the server
-const AuthProvider = dynamic(
+const AuthProvider = dynamicImport(
   () => import("@/contexts/AuthContext").then((m) => ({ default: m.AuthProvider })),
   {
     ssr: false,
